@@ -8,49 +8,51 @@ from apps.db import queries
 class DBHandler:
 
     def __init__(self, conf='database.ini', site_root=os.environ['VIRTUAL_ENV']):
-        self.config_filepath = str(site_root) + str(conf)
-        self.db_params = self.parse_config(self.config_filepath)
-        self.conn, self.cur = self.init_connection()
+        self.conf = conf
+        self.site_root = site_root
+        self.config_filepath = None
+        self.conn = None
+        self.cur = None
+        self.init_connection()
 
     def init_connection(self):
+        db_params = self.parse_config()
+
         try:
-            conn = psycopg2.connect(**self.db_params)
-            cur = conn.cursor()
+            self.conn = psycopg2.connect(**db_params)
+            self.cur = self.conn.cursor()
         except psycopg2.DatabaseError as de:
             error(de)
-            return None
-
-        return conn, cur
 
     def parse_config(self, section='postgres'):
         parser = ConfigParser()
-        db_params = {}
+        postgres_config_params = {}
 
         try:
-            parser.read(self.config_filepath)
+            parser.read(self.site_root + "/" + self.conf)
+            if not parser.has_section(section):
+                raise KeyError
 
-            if parser.has_section(section):
-                params = parser.items(section)
-
-                for param in params:
-                    db_params[param[0]] = param[1]
+            for param in parser.items(section):
+                postgres_config_params[param[0]] = param[1]
         except IOError as io:
             error(io)
-        except KeyError as ke:
-            error(ke)
 
-        return db_params
+        return postgres_config_params
 
     def write_to_db(self, sql, params, return_key=False):
         """
         Execute an insert, update, or create statement.
         :param sql: sql query string, with %s as placeholder for parameter values
         :param params: NoneType or tuple of query parameters, must equal amount specified in query.
-        :return: If your query has a RETURNING CLAUSE, returns value[0] of tuple returned by db, else
-        NoneType.
+        :param return_key: if True, queries the database to retrieve value fetched by RETURNING CLAUSE of sql param.
+        :return: If your query has a RETURNING CLAUSE and return_key flag is set to True, returns value[0] of
+        tuple returned by db, else NoneType.
         """
-        if not check_query_params(sql, params):
+        if not check_query_and_params(sql, params):
             return
+
+        print(params)
 
         try:
             if len(params) == 0:
@@ -61,7 +63,7 @@ class DBHandler:
             if return_key:
                 # Do I want to be handing back the entire tuple? I think in this case no, it's a
                 # newly generated id retrieval.
-                record_id = self.conn.fetchone()[0]
+                record_id = self.cur.fetchone()[0]
             else:
                 record_id = None
 
@@ -77,20 +79,19 @@ class DBHandler:
         :param params: Defaults to None (no parameters specified). NoneType or tuple
         of query parameters. Must equal amount specified in query.
         :param fetch_one: Defaults to False (fetch all results). if True, only returns
-        one (first or only) result row.
-        If False, returns all results supplied by db.
+        one (first or only) result row. If False, returns all results supplied by db.
         :return: NoneType if no results. Tuple if fetch_one=True and db returned result.
         Otherwise, list of tuples.
         """
-        if not check_query_params(sql, params=None):
-            return
+        res = check_query_and_params(sql)
+        print("check:" + str(res))
         try:
             self.cur.execute(sql, params)
 
             if fetch_one:
-                res = self.conn.fetchone()
+                res = self.cur.fetchone()
             else:
-                res = self.conn.fetchall()
+                res = self.cur.fetchall()
 
             self.conn.commit()
             return res if res else None
@@ -163,40 +164,37 @@ class DBHandler:
 
 
 def validate_id_res(ids):
-    if len(ids) == 0:
+    if not ids or len(ids) == 0:
         print("No matching ids found")
+        return None
     elif len(ids) > 1:
         print("Multiple possible matches returned, "
               "please narrow your search by adding more criteria.")
+        return None
     else:
-        if len(ids[0]) == 0 or len(ids[0]) > 1:
-            print("""
-                The result tuple was an invalid length (should be 
-                length 1). Illegal return condition. It wasn't you, 
-                it was me.
-                """)
+        if len(ids[0]) != 1:
+            print("""The result tuple was an invalid length (should be length 1). Illegal return condition. 
+            It wasn't you, it was me.""")
             raise psycopg2.InternalError
-        else:
-            return ids[0][0]
-    return None
+        return ids[0][0]
 
 
-def check_query_params(sql, query_params=None):
-    if type(sql) != str or (query_params and type(query_params) != tuple):
+def check_query_and_params(sql, query_params=None):
+    if type(sql) != str or not sql or sql == "":
         print("TypeError: Type of query is: " + type(sql))
-        print("Type of parameter values is: " + type(query_params))
         raise TypeError
-    if not sql or sql == "":
-        raise psycopg2.ProgrammingError
-    elif type(sql) != str or type(query_params) != tuple:
-        raise TypeError
-    else:
+    if query_params and len(query_params) > 0:
+        if type(query_params) != tuple:
+            print("Type of parameter values is: " + str(type(query_params)))
+            raise TypeError
+
         param_count = sql.count("%s")
 
-        if (not query_params or len(query_params) == 0) and param_count != 0 or \
-                len(query_params) != param_count:
+        if len(query_params) != param_count:
             print("Expected param count:" + str(param_count) + ", actual: " + str(len(query_params)))
-            print(sql + " --> " + query_params)
+            print(sql)
+            print(" --> ")
+            print(query_params)
             raise psycopg2.OperationalError
     return True
 

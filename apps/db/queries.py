@@ -1,6 +1,6 @@
-############
+####################################################################################
 # SELECTS
-############
+####################################################################################
 
 
 def get_member_id_by_current_district():
@@ -131,16 +131,14 @@ def get_district():
     return sql
 
 
-############
+################################################################################################
 # INSERTS
-############
+################################################################################################
 
-def insert_district_ids():
+def insert_district_id():
     sql = """
-        INSERT INTO district
-        (id, state, district_num)
-        VALUES (DEFAULT, %s, %s)
-        ON CONFLICT DO NOTHING
+        INSERT INTO district (state, district_num) 
+        VALUES (%s, %s) 
         RETURNING id;
     """
 
@@ -262,9 +260,9 @@ def insert_poverty_summ():
     return sql
 
 
-############
+################################################################################################
 # UPDATES
-############
+################################################################################################
 
 def update_religion():
     sql = """
@@ -272,19 +270,16 @@ def update_religion():
         SET religion = %s
         WHERE id = %s;
     """
-
     return sql
 
 
-# todo
 def set_member_session_district_id():
     sql = """
         UPDATE member_session
         set district_id = %s
         where state = %s 
-        and district_num= %s;
+        and district_num = %s;
     """
-
     return sql
 
 
@@ -350,4 +345,17 @@ def update_demographics():
             WHERE member_id = %s;
         """
 
+    return sql
+
+
+################################################################################################
+# DELETE / TRUNCATE
+################################################################################################
+
+
+def truncate_all():
+    sql = """
+        TRUNCATE TABLE member_district, district_summary, district_poverty_summary, 
+          district_poverty_detail, district, member, member_session, member_senate, member_id_url, member_house;
+        """
     return sql
