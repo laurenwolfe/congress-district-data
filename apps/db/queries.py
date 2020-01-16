@@ -44,6 +44,16 @@ def get_member_id_by_first_last_name():
     sql = """
         SELECT id
         FROM member
+        WHERE last_name = %s AND first_name = %s;
+    """
+
+    return sql
+
+
+def get_member_id_by_first_last_name_in_office():
+    sql = """
+        SELECT id
+        FROM member
         WHERE last_name = %s AND first_name = %s 
         AND in_office = TRUE;
     """
