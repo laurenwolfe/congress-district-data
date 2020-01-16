@@ -17,8 +17,6 @@ def insert_district_ids(dbh, file, update_members=False):
         reader = csv.reader(csv_file)
 
         for row in reader:
-            print("row:")
-            print(row)
             district_id = dbh.write_to_db(queries.insert_district_id(), (row[0], int(row[1])), True)
 
             if not district_id:

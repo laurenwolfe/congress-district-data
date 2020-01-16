@@ -40,6 +40,12 @@ class DBHandler:
 
         return postgres_config_params
 
+    def execute(self, sql, vals):
+        self.cur.execute(sql, vals)
+
+        if self.cur.rowcount > 0:
+            return self.cur.fetchall()
+
     def write_to_db(self, sql, params, return_key=False):
         """
         Execute an insert, update, or create statement.
@@ -49,26 +55,17 @@ class DBHandler:
         :return: If your query has a RETURNING CLAUSE and return_key flag is set to True, returns value[0] of
         tuple returned by db, else NoneType.
         """
-        if not check_query_and_params(sql, params):
-            return
-
-        print(params)
-
         try:
-            if len(params) == 0:
+            if not params:
                 self.cur.execute(sql)
             else:
                 self.cur.execute(sql, params)
 
-            if return_key:
-                # Do I want to be handing back the entire tuple? I think in this case no, it's a
-                # newly generated id retrieval.
-                record_id = self.cur.fetchone()[0]
-            else:
-                record_id = None
-
             self.conn.commit()
-            return record_id
+
+            if return_key:
+                res = self.cur.fetchone()
+                return res
         except ConnectionError as e:
             error(e)
 
@@ -83,20 +80,26 @@ class DBHandler:
         :return: NoneType if no results. Tuple if fetch_one=True and db returned result.
         Otherwise, list of tuples.
         """
-        res = check_query_and_params(sql)
-        print("check:" + str(res))
         try:
             self.cur.execute(sql, params)
 
-            if fetch_one:
+            row_count = self.cur.rowcount
+
+            if row_count <= 0:
+                res = None
+            elif row_count == 1:
                 res = self.cur.fetchone()
+                self.conn.commit()
             else:
                 res = self.cur.fetchall()
+                self.conn.commit()
+            return res
 
-            self.conn.commit()
-            return res if res else None
         except ConnectionError as e:
             error(e)
+
+    def commit(self):
+        self.conn.commit()
 
     def close(self):
         """
@@ -106,23 +109,28 @@ class DBHandler:
         self.cur.close()
         self.conn.close()
 
-    def get_mem_id_by_name(self, last_name, first_name=None):
+    def get_mem_id_by_name(self, params):
         """
         Retrieves currently in office MOC's member_id by first and last name
         :param last_name: last_name as string
         :param first_name: first_name as string, optional.
         :return: member_id if exists, else None
         """
-        if last_name and first_name:
-            sql = queries.get_member_id_by_first_last_name()
-            query_params = (last_name, first_name)
+        if len(params) > 1:
+            query = queries.get_member_id_by_first_last_name()
         else:
-            sql = queries.get_member_id_by_last_name()
-            query_params = (last_name,)
+            query = queries.get_member_id_by_last_name()
 
-        member_ids = self.query_db(sql, query_params)
+        self.cur.execute(query, params)
 
-        return validate_id_res(member_ids)
+        res = self.cur.fetchone()
+
+        if res:
+            print(res)
+            return res[0][0]
+        else:
+            print("no result")
+        return None
 
     def get_mem_id_by_region(self, last_name, state, session=None, district=None):
         """
@@ -135,10 +143,9 @@ class DBHandler:
         :return: member_id if exists, else None
         """
 
-        if not last_name or len(last_name) == 0 or type(last_name) != str or \
-                not state or len(state) != 2 or type(state) != str:
-            print("Last name and state are required. Both should be strings, and state should "
-                  "be 2 characters")
+        if not last_name or not state or (type(last_name) or type(state)) != str:
+            print("Last name and state are required. Both should be strings, "
+                  "and state should be 2 characters")
             raise ValueError
 
         last_name = last_name.capitalize()
@@ -149,10 +156,12 @@ class DBHandler:
         if session and type(session) != int or district and type(district) != int:
             print("if providing a session or district, they must be a valid integer.")
             raise ValueError
-        if not district and not session:
-            res = self.query_db(queries.mem_id_by_name_state(), (last_name, state))
+        if not (district and session):
+            res = self.query_db(queries.mem_id_by_name_state(),
+                                (last_name, state), True)
         elif not district:
-            res = self.query_db(queries.mem_id_by_name_session_state(), (last_name, state, session))
+            res = self.query_db(queries.mem_id_by_name_session_state(),
+                                (last_name, state, session))
         elif not session:
             res = self.query_db(queries.mem_id_by_name_state_district(),
                                 (last_name, state, district))
@@ -164,7 +173,7 @@ class DBHandler:
 
 
 def validate_id_res(ids):
-    if not ids or len(ids) == 0:
+    if not ids:
         print("No matching ids found")
         return None
     elif len(ids) > 1:
@@ -180,22 +189,24 @@ def validate_id_res(ids):
 
 
 def check_query_and_params(sql, query_params=None):
-    if type(sql) != str or not sql or sql == "":
-        print("TypeError: Type of query is: " + type(sql))
+    if type(sql) != str or not sql:
+        print("TypeError: Type of query is: " + str(type(sql)))
         raise TypeError
-    if query_params and len(query_params) > 0:
-        if type(query_params) != tuple:
-            print("Type of parameter values is: " + str(type(query_params)))
-            raise TypeError
+    if not query_params:
+        return True
 
-        param_count = sql.count("%s")
+    if type(query_params) != tuple:
+        print("Type of parameter values is: " + str(type(query_params)))
+        raise TypeError
 
-        if len(query_params) != param_count:
-            print("Expected param count:" + str(param_count) + ", actual: " + str(len(query_params)))
-            print(sql)
-            print(" --> ")
-            print(query_params)
-            raise psycopg2.OperationalError
+    param_count = sql.count("%s")
+
+    if len(query_params) != param_count:
+        print("Expected param count:" + str(param_count) + ", actual: " + str(len(query_params)))
+        print(sql)
+        print(query_params)
+        raise psycopg2.OperationalError
+
     return True
 
 

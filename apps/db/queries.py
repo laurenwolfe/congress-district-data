@@ -3,17 +3,34 @@
 ####################################################################################
 
 
+def get_count_in_member():
+    sql = """
+        select count(*)
+        from member
+        where id = %s;    
+    """
+    return sql
+
+
+def get_count_in_member_session():
+    sql = """
+        select count(*)
+        from member_session
+        where member_id = %s and session_num = %s and party = %s;    
+    """
+    return sql
+
+
 def get_member_id_by_current_district():
     sql = """
         SELECT member_id
         from member_district
         where district_id = %s;
     """
-
     return sql
 
 
-def get_district_id_by_current_member():
+def get_district_id_by_member():
     sql = """
         SELECT district_id
         from member_district
@@ -148,10 +165,10 @@ def insert_district_id():
 def insert_member():
     sql = """
         INSERT INTO member
-        (id, first_name, middle_name, last_name, suffix, birthdate, gender, in_office)
+        (id, in_office, first_name, middle_name, last_name, 
+        suffix, birthdate, gender)
         VALUES (%s, %s, %s, %s, %s, 
-                %s, %s, %s)
-        ON CONFLICT DO NOTHING;                   
+                %s, %s, %s);                   
     """
     return sql
 
@@ -159,8 +176,7 @@ def insert_member():
 def insert_member_district():
     sql = """
         INSERT INTO member_district
-        VALUES (%s, $s)
-        ON CONFLICT DO NOTHING;
+        VALUES (%s, $s);
     """
 
     return sql
@@ -170,8 +186,7 @@ def insert_member_house():
     sql = """
         INSERT INTO member_house 
         (member_id)
-        VALUES (%s)
-        ON CONFLICT DO NOTHING; 
+        VALUES (%s); 
     """
 
     return sql
@@ -181,8 +196,7 @@ def insert_member_senate():
     sql = """
         INSERT INTO member_senate
         (member_id)  
-        VALUES (%s)
-        ON CONFLICT DO NOTHING;
+        VALUES (%s);
     """
 
     return sql
@@ -191,16 +205,15 @@ def insert_member_senate():
 def insert_member_session():
     sql = """
     INSERT INTO member_session
-    (member_id, session_num, chamber, state, district_num, district_id, party, dw_nominate,
-     total_votes, missed_votes, total_present, missed_votes_pct, votes_with_party_pct, 
-     votes_against_party_pct, office_address, next_election, last_updated
+    (member_id, session_num, chamber, state, district_num, 
+    district_id, party, dw_nominate, total_votes, missed_votes, 
+    total_present, missed_votes_pct, votes_with_party_pct, votes_against_party_pct, 
+    office_address, next_election, last_updated
 )
     VALUES (%s, %s, %s, %s, %s, 
             %s, %s, %s, %s, %s, 
-            %s, %s, %s, %s, %s, 
-            %s, %s) 
-    ON CONFLICT (member_id, session_num)
-    DO NOTHING; 
+            %s, %s, %s, %s, 
+            %s, %s, %s); 
 """
 
     return sql
@@ -214,22 +227,27 @@ def insert_member_codes_ids():
         youtube_id, facebook_id, twitter_id)
         VALUES (%s, %s, %s, %s, %s, 
                 %s, %s, %s, %s, %s, 
-                %s, %s, %s)
-        ON CONFLICT DO NOTHING;                
+                %s, %s, %s);                
     """
 
     return sql
 
 
+def insert_current_to_member_district():
+    sql = """
+        INSERT INTO member_district
+        VALUES (%s, %s);
+    """
+    return sql
+
+
 # todo change
-def insert_demographics():
+def insert_district_summary():
     sql = """
     INSERT INTO district_summary
     (district_id, cook_pvi)
-    VALUES (%s, %s)
-    ON CONFLICT DO NOTHING;                     
+    VALUES (%s, %s);                     
     """
-
     return sql
 
 
@@ -241,10 +259,8 @@ def insert_poverty_details():
             %s, %s, %s, %s, %s, 
             %s, %s, %s, %s, %s,
             %s, %s, %s, %s, %s, 
-            %s, %s, %s)
-    ON CONFLICT DO NOTHING;
+            %s, %s, %s);
     """
-
     return sql
 
 
@@ -253,10 +269,8 @@ def insert_poverty_summ():
     INSERT INTO district_poverty_summary
     VALUES (%s, %s, %s, %s, %s, 
             %s, %s, %s, %s, %s,             
-            %s)
-    ON CONFLICT DO NOTHING;
+            %s);
     """
-
     return sql
 
 
@@ -325,9 +339,9 @@ def update_member():
     return sql
 
 
-def update_demographics():
+def update_district_summary():
     sql = """
-            UPDATE demographics
+            UPDATE district_summary
             SET 
                 census_2010_pop_total = %s,
                 census_2010_pop_white = %s,

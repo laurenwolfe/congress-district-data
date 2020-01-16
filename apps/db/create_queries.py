@@ -153,10 +153,7 @@ def create_member_session():
         office_address          varchar(100),
         next_election           int,
         last_updated            time(6),
-        unique (member_id, session_num),
-        constraint m_session_member_id_fk
-        foreign key (member_id) references member (id)
-        );
+        unique (member_id, session_num));
 
     """
 
