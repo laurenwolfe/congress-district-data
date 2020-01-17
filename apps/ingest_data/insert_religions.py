@@ -43,7 +43,6 @@ def parse_religion_csv(dbh, file):
                     (religion, member_id))
 
 
-
 def main():
     dbh = DBHandler()
     parse_religion_csv(dbh, 'member_religions.csv')

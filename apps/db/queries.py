@@ -334,7 +334,7 @@ def update_member_senate():
     return sql
 
 
-def update_member():
+def update_member_demos():
     sql = """
             UPDATE member
             SET full_name = %s,
@@ -343,7 +343,7 @@ def update_member():
                 secondary_race = %s,
                 secondary_ethnicity = %s,                
                 lgbtq = %s
-            WHERE member_id = %s;
+            WHERE id = %s;
         """
 
     return sql
@@ -366,7 +366,7 @@ def update_district_summary():
                 vote_pct_2012_romney = %s,
                 vote_pct_2008_obama = %s,
                 vote_pct_2008_mccain = %s
-            WHERE member_id = %s;
+            WHERE district_id = %s;
         """
 
     return sql

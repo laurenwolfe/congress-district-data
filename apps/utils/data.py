@@ -9,6 +9,15 @@ def convert_empty_to_null(record):
     return record
 
 
+def convert_to_tuple(record):
+    record_list = []
+    for field in record:
+        if field == "":
+            field = None
+        record_list.append(field)
+    return tuple(record_list)
+
+
 def convert_census_null_to_0(record):
     for i in range(len(record)):
         if record[i] == "":
