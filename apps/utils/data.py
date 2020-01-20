@@ -18,11 +18,10 @@ def convert_to_tuple(record):
     return tuple(record_list)
 
 
-def convert_census_null_to_0(record):
-    for i in range(len(record)):
-        if record[i] == "":
-            record[i] = None
-    return record
+def convert_census_null_to_0(field):
+    if field == 'N' or field == '':
+        field = '0'
+    return field
 
 
 def convert_to_postgres_date(value, year=None):
