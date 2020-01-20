@@ -84,7 +84,6 @@ def parse_csv(files, years, year_idxs_list, dbh):
 
 
 def extract_district_id(census_code, dbh):
-    print(census_code)
     loc_data = census_code.split("US")
     loc_id = loc_data[1]
 

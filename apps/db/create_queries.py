@@ -1,8 +1,8 @@
 def create_district():
     sql = """
-            create table district
+        create table district
         (
-      id                serial PRIMARY KEY,
+          id            serial PRIMARY KEY,
           state         varchar(2) NOT NULL,
           district_num  int        NOT NULL,
           unique (state, district_num)
@@ -136,7 +136,7 @@ def create_member_session():
     sql = """
         create table member_session
         (
-        member_id               varchar(7) primary key,
+        member_id               varchar(7),
         session_num             int,
         chamber                 varchar(6),
         state                   varchar(2),
@@ -153,7 +153,7 @@ def create_member_session():
         office_address          varchar(100),
         next_election           int,
         last_updated            time(6),
-        unique (member_id, session_num));
+        unique (member_id, session_num, party));
 
     """
 
@@ -244,7 +244,7 @@ def create_district_poverty_detail():
         worked_full_all   int,
         worked_part       int,
         did_not_work      int,
-        unique (district_id, report_year),
+        unique (district_id, report_year, poverty_row),
         constraint d_pov_detail_district_id_fk
         foreign key (district_id)
           references district (id)

@@ -28,7 +28,6 @@ def parse_member_csv(file, dbh):
                 member_id = dbh.query_db(
                     queries.get_member_id_by_current_district(), (district_id,))
 
-            print(row)
             member_id = member_id[0]
             race_eth = row[9].split(' - ')
 

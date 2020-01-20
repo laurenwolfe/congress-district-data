@@ -30,16 +30,6 @@ def get_member_id_by_current_district():
     return sql
 
 
-def get_district_id_by_member():
-    sql = """
-        SELECT district_id
-        from member_district
-        where member_id = %s;
-    """
-
-    return sql
-
-
 def get_member_id_by_first_last_name():
     sql = """
         SELECT id
@@ -139,15 +129,6 @@ def get_member_id_by_state_last_name():
     return sql
 
 
-def get_districts():
-    sql = """
-        SELECT id, state, district_num
-        FROM district;
-    """
-
-    return sql
-
-
 def get_district():
     sql = """
         SELECT id
@@ -183,15 +164,6 @@ def insert_member():
     return sql
 
 
-def insert_member_district():
-    sql = """
-        INSERT INTO member_district
-        VALUES (%s, $s);
-    """
-
-    return sql
-
-
 def insert_member_house():
     sql = """
         INSERT INTO member_house 
@@ -217,13 +189,13 @@ def insert_member_session():
     INSERT INTO member_session
     (member_id, session_num, chamber, state, district_num, 
     district_id, party, dw_nominate, total_votes, missed_votes, 
-    total_present, missed_votes_pct, votes_with_party_pct, votes_against_party_pct, 
-    office_address, next_election, last_updated
+    total_present, missed_votes_pct, votes_with_party_pct, votes_against_party_pct, office_address, 
+    next_election, last_updated
 )
     VALUES (%s, %s, %s, %s, %s, 
             %s, %s, %s, %s, %s, 
-            %s, %s, %s, %s, 
-            %s, %s, %s); 
+            %s, %s, %s, %s, %s, 
+            %s, %s); 
 """
 
     return sql
@@ -251,7 +223,6 @@ def insert_current_to_member_district():
     return sql
 
 
-# todo change
 def insert_district_summary():
     sql = """
     INSERT INTO district_summary
@@ -382,4 +353,12 @@ def truncate_all():
         TRUNCATE TABLE member_district, district_summary, district_poverty_summary, 
           district_poverty_detail, district, member, member_session, member_senate, member_id_url, member_house;
         """
+    return sql
+
+
+def drop_all():
+    sql = """
+    DROP TABLE member_district, district_summary, district_poverty_summary,
+          district_poverty_detail, district, member, member_session, member_senate, member_id_url, member_house;
+          """
     return sql

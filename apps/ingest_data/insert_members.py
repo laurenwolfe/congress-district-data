@@ -9,6 +9,11 @@ CURR_SESSION = '116'
 
 
 def process_congress_session_json(dbh, files):
+    """
+    Insert MOC data into database.
+    :param dbh: DBHandler object used for database connection
+    :param files: list of MOC files to process
+    """
     for file in files:
         print("Processing: " + file)
 
@@ -21,7 +26,8 @@ def process_congress_session_json(dbh, files):
             chamber = json_data["results"][0]["chamber"]
 
             for member_record in json_data["results"][0]["members"]:
-                member = data.convert_empty_to_null(member_record)
+                # member = data.convert_empty_to_null(member_record)
+                member = member_record
                 if not member["id"]:
                     raise ValueError
 
@@ -119,6 +125,7 @@ def main():
 
     process_congress_session_json(dbh, house_files)
     process_congress_session_json(dbh, senate_files)
+    dbh.commit()
     dbh.close()
 
 

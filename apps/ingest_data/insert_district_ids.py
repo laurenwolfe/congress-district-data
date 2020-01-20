@@ -31,6 +31,7 @@ def insert_district_ids(dbh, file, update_members=False):
 def main():
     dbh = DBHandler()
     insert_district_ids(dbh, 'districts.csv')
+    dbh.commit()
     dbh.close()
 
 
