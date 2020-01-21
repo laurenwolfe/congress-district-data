@@ -1,5 +1,5 @@
 
-# US census state key
+# US census state FIPS codes
 states = {
     "01": "AL",
     "02": "AK",
@@ -52,7 +52,11 @@ states = {
     "54": "WV",
     "55": "WI",
     "56": "WY",
-    "72": "PR"
+    "60": "AS",
+    "66": "GU",
+    "69": "MP",
+    "72": "PR",
+    "78": "VI"
 }
 
 # for parse

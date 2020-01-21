@@ -91,7 +91,7 @@ def extract_district_id(census_code, dbh):
     state = mappings.states[loc_id[0:2]]
     district = int(loc_id[2:])
 
-    # district 98 is code for at-large, which I've coded as 0
+    # district 98 is code for non-voting delegate, which I've coded as 0 (same as at-large)
     if district == 98:
         district = 0
 

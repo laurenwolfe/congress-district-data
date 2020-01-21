@@ -145,8 +145,8 @@ def get_district():
 
 def insert_district_id():
     sql = """
-        INSERT INTO district (state, district_num) 
-        VALUES (%s, %s) 
+        INSERT INTO district (state, district_num, state_fips) 
+        VALUES (%s, %s, %s) 
         RETURNING id;
     """
 
